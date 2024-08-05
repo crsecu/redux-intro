@@ -1,8 +1,16 @@
+import { createStore } from "redux";
+
 /* 1. Create initial state object */
-const initialState = {
+const initialStateAccount = {
   balance: 0,
   loan: 0,
   loanPurpose: "",
+};
+
+const initialStateCustomer = {
+  fullName: "",
+  nationalID: "",
+  createAt: "",
 };
 
 /*2. Define reducer function  
@@ -10,7 +18,7 @@ const initialState = {
 - reducers are not allowed to modify the existent state (they create new state) or handle any async logic or side effects
 - unlike useReducer, in Redux, we pass the initial state as the default state(default parameter)
  */
-function reducer(state = initialState, action) {
+function reducer(state = initialStateAccount, action) {
   switch (action.type) {
     /* action name convention advised by redux team - action name should model what happened, or what should happen:
 "state domain/event name" */
@@ -27,8 +35,12 @@ function reducer(state = initialState, action) {
       };
     case "account/requestLoan":
       if (state.loan > 0) return state;
-      //LATER
-      return { ...state, loan: action.payload };
+      return {
+        ...state,
+        loan: action.payload.amount,
+        loanPurpose: action.payload.purpose,
+        balance: state.balance + action.payload.amount,
+      };
     case "account/payLoan":
       return {
         ...state,
@@ -41,3 +53,59 @@ function reducer(state = initialState, action) {
       return state;
   }
 }
+
+/* 3. Create Redux Store */
+const store = createStore(reducer);
+
+// store.dispatch({ type: "account/deposit", payload: 500 });
+
+// console.log("Hey Redux");
+// console.log(store.getState());
+// store.dispatch({ type: "account/withdraw", payload: 100 });
+// console.log(store.getState());
+
+// store.dispatch({
+//   type: "account/requestLoan",
+//   payload: { amount: 1000, purpose: "Buy a car" },
+// });
+
+// console.log(store.getState());
+
+// store.dispatch({
+//   type: "account/payLoan",
+// });
+
+// console.log(store.getState());
+
+/* Create action creator - one per each possible action */
+function deposit(amount) {
+  return { type: "account/deposit", payload: amount };
+}
+
+function withdraw(amount) {
+  return { type: "account/withdraw", payload: amount };
+}
+
+function requestLoan(amount, purpose) {
+  return {
+    type: "account/requestLoan",
+    payload: { amount, purpose },
+  };
+}
+
+function payLoan() {
+  return {
+    type: "account/payLoan",
+  };
+}
+
+store.dispatch(deposit(500));
+console.log(store.getState());
+
+store.dispatch(requestLoan(7000, "coding bootcamp"));
+console.log(store.getState());
+
+store.dispatch(payLoan());
+console.log(store.getState());
+
+/*Custome Action Creators  */
