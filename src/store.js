@@ -1,4 +1,4 @@
-import { createStore } from "redux";
+import { combineReducers, createStore } from "redux";
 
 /* 1. Create initial state object */
 const initialStateAccount = {
@@ -10,7 +10,7 @@ const initialStateAccount = {
 const initialStateCustomer = {
   fullName: "",
   nationalID: "",
-  createAt: "",
+  createdAt: "",
 };
 
 /*2. Define reducer function  
@@ -18,7 +18,7 @@ const initialStateCustomer = {
 - reducers are not allowed to modify the existent state (they create new state) or handle any async logic or side effects
 - unlike useReducer, in Redux, we pass the initial state as the default state(default parameter)
  */
-function reducer(state = initialStateAccount, action) {
+function accountReducer(state = initialStateAccount, action) {
   switch (action.type) {
     /* action name convention advised by redux team - action name should model what happened, or what should happen:
 "state domain/event name" */
@@ -54,8 +54,14 @@ function reducer(state = initialStateAccount, action) {
   }
 }
 
+/* Create the Root Reducer by ombine all reducers */
+const rootReducer = combineReducers({
+  account: accountReducer,
+  customer: customerReducer,
+});
+
 /* 3. Create Redux Store */
-const store = createStore(reducer);
+const store = createStore(rootReducer);
 
 // store.dispatch({ type: "account/deposit", payload: 500 });
 
@@ -108,4 +114,42 @@ console.log(store.getState());
 store.dispatch(payLoan());
 console.log(store.getState());
 
-/*Custome Action Creators  */
+/* Customer Action Creators  */
+function createCustomer(fullName, nationalID) {
+  return {
+    type: "customer/createCustomer",
+    payload: {
+      fullName,
+      nationalID,
+      createdAt: new Date().toISOString(),
+    },
+  };
+}
+
+function updateName(fullName) {
+  return { type: "account/updateName", payload: fullName };
+}
+
+function customerReducer(state = initialStateCustomer, action) {
+  switch (action.type) {
+    case "customer/createCustomer":
+      return {
+        ...state,
+        fullName: action.payload.fullName,
+        nationalID: action.payload.nationalID,
+        createdAt: action.payload.createdAt,
+      };
+    case "customer/updateName":
+      return {
+        ...state,
+        fullName: action.payload,
+      };
+    default:
+      return state;
+  }
+}
+
+store.dispatch(createCustomer("John Doe", "765"));
+console.log(store.getState());
+store.dispatch(createCustomer("Will Smith", "11098"));
+console.log(store.getState());
