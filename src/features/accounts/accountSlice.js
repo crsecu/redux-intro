@@ -19,6 +19,7 @@ const accountSlice = createSlice({
   reducers: {
     deposit(state, action) {
       state.balance += action.payload;
+      state.isLoading = false;
     },
     withdraw(state, action) {
       state.balance -= action.payload;
@@ -38,16 +39,47 @@ const accountSlice = createSlice({
         state.balance += action.payload.amount;
       },
     },
-    payLoan(state, action) {
+    payLoan(state) {
       state.balance -= state.loan;
       state.loan = 0;
       state.loanPurpose = "";
+    },
+    convertingCurrency(state) {
+      state.isLoading = true;
     },
   },
 });
 
 console.log("account slice ", accountSlice);
-export const { deposit, payLoan, requestLoan, withdraw } = accountSlice.actions;
+
+export const { payLoan, requestLoan, withdraw } = accountSlice.actions;
+
+export function deposit(amount, currency) {
+  console.log(amount, currency);
+  if (currency === "USD") return { type: "account/deposit", payload: amount };
+
+  /* middleware: dispatch function will return a function instead of an object,
+  we will dispatch a function; redux will know that that function is a thunk;
+  it will execute that function and not immediately dispatch the
+  action to the store
+  basically, redux knows that the below function is a async action that we want to
+  execute before dispatching to the store
+   */
+  return async function (dispatch, getState) {
+    dispatch({ type: "account/convertingCurrency" });
+    /* API call */
+    const res = await fetch(
+      `https://api.frankfurter.app/latest?amount=${amount}&from=${currency}&to=USD`
+    );
+    const data = await res.json();
+    console.log(data);
+    const converted = data.rates.USD;
+    /*  return action */
+
+    dispatch({ type: "account/deposit", payload: converted });
+  };
+}
+
 export default accountSlice.reducer;
 
 /*2. Define reducer function  
